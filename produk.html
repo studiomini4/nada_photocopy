@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Produk - NADA PHOTOCOPY B2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .product-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        
+        .flying-item {
+            position: fixed;
+            z-index: 9999;
+            width: 40px;
+            height: 40px;
+            background: #2563eb;
+            border-radius: 50%;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        .cart-bounce { animation: cartBounce 0.4s ease; }
+        @keyframes cartBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <nav class="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-200">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-slate-600 hover:text-blue-600 transition p-2">
+                    <i class="fa-solid fa-arrow-left text-xl"></i>
+                </a>
+                
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </span>
+                    <input type="text" id="searchInput" oninput="searchProduct()" 
+                        class="block w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 text-sm transition" 
+                        placeholder="Cari alat tulis...">
+                </div>
+
+                <button onclick="goToCheckout()" id="cartBtn" class="relative p-2.5 bg-blue-50 rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition active:scale-90 duration-200">
+                    <i class="fa-solid fa-cart-shopping text-xl"></i>
+                    <span id="cartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full font-bold border-2 border-white">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto py-6 px-4">
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Katalog Produk</h2>
+                <p class="text-slate-500 text-sm">Temukan kebutuhan kantor & sekolahmu</p>
+            </div>
+            <span id="itemCount" class="hidden md:block text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase">0 Barang</span>
+        </div>
+
+        <div id="katalog-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4"></div>
+    </div>
+
+    <script>
+        // MEMBACA FILE GAMBAR LANGSUNG TANPA NAMA FOLDER
+        const dataAtk = [
+            { id: 1, nama: "Kertas HVS A4 70gr", harga: 50000, img: "ini (1).ico" },
+            { id: 2, nama: "Buku Sidu 38 Lembar", harga: 40000, img: "ini (2).ico" },
+            { id: 3, nama: "Pensil 2B Faber Castell", harga: 5000, img: "ini (3).ico" },
+            { id: 4, nama: "Penghapus Faber Castell", harga: 4000, img: "ini (4).ico" },
+            { id: 5, nama: "Penggaris Besi 30 CM", harga: 5000, img: "ini (5).ico" },
+            { id: 6, nama: "Buku Sidu 58 Lembar", harga: 50000, img: "ini (6).ico" },
+            { id: 7, nama: "Staples 10 inch", harga: 20000, img: "ini (7).ico" },
+            { id: 8, nama: "Lakban Bening Besar", harga: 15000, img: "ini (8).ico" },
+            { id: 9, nama: "Gunting Joyko SC-828", harga: 10000, img: "ini (9).ico" },
+            { id: 10, nama: "Cutter Besar Jazzco", harga: 15000, img: "ini (10).ico" },
+            { id: 11, nama: "Lem Lipstik / Glue Stick", harga: 5000, img: "ini (11).ico" },
+            { id: 12, nama: "Spidol Snowman", harga: 8000, img: "ini (12).ico" },
+            { id: 13, nama: "Isi Staples Kecil", harga: 4000, img: "ini (13).ico" },
+            { id: 14, nama: "Pena Standar AE7", harga: 3000, img: "ini (14).ico" },
+            { id: 15, nama: "Kertas HVS F4 70gr", harga: 55000, img: "ini (15).ico" },
+            { id: 16, nama: "Buku Big Boss", harga: 50000, img: "ini (16).ico" },
+            { id: 17, nama: "Map Coklat Tali 310", harga: 3000, img: "ini (17).ico" },
+            { id: 18, nama: "Mika Asahi Jilid", harga: 65000, img: "ini (18).ico" },
+            { id: 19, nama: "Map Kambing / Snelhecter", harga: 3000, img: "ini (19).ico" },
+            { id: 20, nama: "Pena Joyko JK-100 0.5", harga: 5000, img: "ini (20).ico" },
+            { id: 21, nama: "Double Tape Besar", harga: 15000, img: "ini (21).ico" },
+            { id: 22, nama: "Buku Iqro' Besar", harga: 10000, img: "ini (22).ico" },
+            { id: 23, nama: "Buku Iqro' Kecil", harga: 8000, img: "ini (23).ico" },
+            { id: 24, nama: "Isi Cutter Kecil", harga: 5000, img: "ini (24).ico"},
+            { id: 25, nama: "Isi Cutter Besar", harga: 10000, img: "ini (25).ico"},
+            { id: 26, nama: "Pewarna Greebel Besar", harga: 30000, img: "ini (26).ico"},
+            { id: 27, nama: "Pewarna Crayon Besar", harga: 20000, img: "ini (27).ico"},
+            { id: 28, nama: "Pewarna Greebel Kecil", harga: 18000, img: "ini (28).ico"},
+            { id: 29, nama: "Penggaris Lipat", harga: 4000, img: "ini (29).ico"},
+            { id: 30, nama: "Cutter Kecil Joyko", harga: 10000, img: "ini (30).ico"},
+            { id: 31, nama: "Penggaris Busur", harga: 4000, img: "ini (31).ico"},
+            { id: 32, nama: "Penggaris Karakter Hewan", harga: 4000, img: "ini (32).ico"},
+            { id: 33, nama: "Penggaris Karakter Sisir", harga: 4000, img: "ini (33).ico"},
+            { id: 34, nama: "Lem Fox Putih Botol", harga: 15000, img: "ini (34).ico"},
+            { id: 35, nama: "Lakban Hitam Besar", harga: 18000, img: "ini (35).ico"},
+            { id: 36, nama: "Lakban Hitam Sedang", harga: 15000, img: "ini (36).ico"}, 
+            { id: 37, nama: "Lakban Hitam Kecil", harga: 10000, img: "ini (37).ico"},
+            { id: 38, nama: "Masking Tape Besar", harga: 15000, img: "ini (38).ico"},
+            { id: 39, nama: "Masking Tape Kecil", harga: 10000, img: "ini (39).ico"},
+            { id: 40, nama: "Nota Besar 2 Ply", harga: 70000, img: "ini (40).ico"},
+            { id: 41, nama: "Nota Kecil 1 Ply", harga: 4000, img: "ini (41).ico"},
+            { id: 42, nama: "Buku Ekspedisi", harga: 15000, img: "ini (42).ico"},
+            { id: 43, nama: "Buku Oktavo", harga: 8000, img: "ini (43).ico"},
+            { id: 44, nama: "Buku Quarto", harga: 15000, img: "ini (44).ico"},
+            { id: 45, nama: "Buku Folio 100 Lembar", harga: 25000, img: "ini (45).ico"}
+        ];
+
+        let keranjang = JSON.parse(localStorage.getItem('cart')) || [];
+
+        function renderProducts(list) {
+            const container = document.getElementById('katalog-container');
+            container.innerHTML = "";
+            
+            if(list.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400">Barang tidak ditemukan...</div>`;
+                return;
+            }
+
+            list.forEach(item => {
+                const inCart = keranjang.find(k => k.id === item.id);
+                const qty = inCart ? inCart.jumlah : 0;
+
+                container.innerHTML += `
+                    <div class="product-card bg-white rounded-2xl overflow-hidden border border-slate-100 flex flex-col shadow-sm">
+                        <div class="aspect-square bg-slate-50 flex items-center justify-center p-4 relative">
+                            <img loading="lazy" id="img-${item.id}" src="${item.img}" alt="${item.nama}" class="max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-500 hover:scale-110" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+                            ${qty > 0 ? `<span class="absolute top-2 right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">x${qty}</span>` : ''}
+                        </div>
+                        <div class="p-3 flex flex-col flex-1">
+                            <h3 class="text-xs font-semibold text-slate-700 h-8 overflow-hidden leading-tight mb-2">${item.nama}</h3>
+                            <div class="mt-auto">
+                                <p class="text-blue-600 font-extrabold text-sm md:text-base mb-3">Rp ${item.harga.toLocaleString('id-ID')}</p>
+                                
+                                <div class="grid grid-cols-5 gap-1">
+                                    <button onclick="addToCart(${item.id}, event)" class="col-span-4 flex items-center justify-center gap-1.5 bg-blue-600 text-white text-[10px] py-2 rounded-lg hover:bg-blue-700 font-bold transition active:scale-95">
+                                        <i class="fa-solid fa-plus"></i> BELI
+                                    </button>
+                                    <button onclick="removeFromCart(${item.id})" class="col-span-1 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition">
+                                        <i class="fa-solid fa-trash-can text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('itemCount').innerText = `${list.length} Barang`;
+        }
+
+        function addToCart(id, event) {
+            const produk = dataAtk.find(p => p.id === id);
+            const index = keranjang.findIndex(item => item.id === id);
+
+            animateFly(event.currentTarget);
+
+            if (index > -1) {
+                keranjang[index].jumlah += 1;
+            } else {
+                keranjang.push({ ...produk, jumlah: 1 });
+            }
+
+            saveCart();
+            renderProducts(getCurrentFilteredList());
+        }
+
+        function removeFromCart(id) {
+            const index = keranjang.findIndex(item => item.id === id);
+            if (index !== -1) {
+                if (keranjang[index].jumlah > 1) {
+                    keranjang[index].jumlah -= 1;
+                } else {
+                    keranjang.splice(index, 1);
+                }
+                saveCart();
+                renderProducts(getCurrentFilteredList());
+            }
+        }
+
+        function saveCart() {
+            localStorage.setItem('cart', JSON.stringify(keranjang));
+            updateCartBadge();
+        }
+
+        function updateCartBadge() {
+            const totalItems = keranjang.reduce((acc, item) => acc + item.jumlah, 0);
+            document.getElementById('cartCount').innerText = totalItems;
+        }
+
+        function animateFly(button) {
+            const cartBtn = document.getElementById('cartBtn');
+            const flyingItem = document.createElement('div');
+            flyingItem.classList.add('flying-item');
+            flyingItem.innerHTML = '<i class="fa-solid fa-cart-plus text-xs"></i>';
+            
+            const btnRect = button.getBoundingClientRect();
+            const cartRect = cartBtn.getBoundingClientRect();
+
+            flyingItem.style.left = `${btnRect.left + (btnRect.width / 2) - 20}px`;
+            flyingItem.style.top = `${btnRect.top}px`;
+            
+            document.body.appendChild(flyingItem);
+
+            setTimeout(() => {
+                flyingItem.style.left = `${cartRect.left + 10}px`;
+                flyingItem.style.top = `${cartRect.top + 10}px`;
+                flyingItem.style.transform = 'scale(0.3)';
+                flyingItem.style.opacity = '0.5';
+            }, 50);
+
+            setTimeout(() => {
+                flyingItem.remove();
+                cartBtn.classList.add('cart-bounce');
+                setTimeout(() => cartBtn.classList.remove('cart-bounce'), 400);
+            }, 800);
+        }
+
+        function searchProduct() {
+            renderProducts(getCurrentFilteredList());
+        }
+
+        function getCurrentFilteredList() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            return dataAtk.filter(item => item.nama.toLowerCase().includes(query));
+        }
+
+        function goToCheckout() {
+            if (keranjang.length === 0) {
+                alert("Keranjang Anda masih kosong!");
+                return;
+            }
+            window.location.href = 'beli.html';
+        }
+
+        updateCartBadge();
+        renderProducts(dataAtk);
+    </script>
+</body>
+</html>

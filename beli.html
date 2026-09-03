@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - NADA PHOTOCOPY B2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        .modal-content { background: white; margin: 10% auto; padding: 25px; border-radius: 20px; max-width: 90%; width: 400px; }
+    </style>
+</head>
+<body class="bg-slate-50 pb-10">
+    <div class="max-w-md mx-auto mt-6 bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
+        <div class="flex items-center gap-3 mb-6 border-b pb-4">
+            <a href="produk.html" class="text-blue-600"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+            <h2 class="text-xl font-extrabold text-slate-800">Detail Pesanan</h2>
+        </div>
+
+        <div id="displayBarang" class="space-y-4 mb-6"></div>
+
+        <div class="space-y-4 pt-4 border-t">
+            <label class="block text-sm font-bold text-slate-700">Metode Pengambilan</label>
+            <select id="metode" onchange="updateOngkir()" class="w-full p-3 rounded-xl border-2 border-slate-100 outline-none focus:border-blue-500 font-medium">
+                <option value="toko">Ambil di Toko (Gratis)</option>
+                <option value="antar">Antar ke Alamat (Delivery)</option>
+            </select>
+
+            <div id="wilayahBox" class="hidden space-y-3 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                <label class="block text-xs font-bold text-blue-800 uppercase">Pilih Lokasi Desa</label>
+                <select id="wilayah" onchange="updateOngkir()" class="w-full p-2 rounded-lg border-none outline-none font-bold text-slate-700">
+                    <option value="0" data-harga="0">-- Pilih Wilayah --</option>
+                    <option value="B1" data-harga="10000">Beji Mulyo (B1) - Rp 10.000</option>
+                    <option value="Mangsang" data-harga="10000">Mangsang (Hijrah Mukti) - Rp 10.000</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-6 bg-slate-900 text-white p-5 rounded-2xl space-y-2">
+            <div class="flex justify-between text-sm opacity-80">
+                <span>Subtotal Barang</span>
+                <span id="txtSubtotal">Rp 0</span>
+            </div>
+            <div class="flex justify-between text-sm opacity-80">
+                <span>Ongkos Kirim</span>
+                <span id="txtOngkir">Rp 0</span>
+            </div>
+            <div class="flex justify-between font-bold text-lg pt-2 border-t border-slate-700">
+                <span>Total Bayar</span>
+                <span id="txtTotal">Rp 0</span>
+            </div>
+        </div>
+
+        <button type="button" onclick="prosesLanjut()" class="w-full mt-6 bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">
+            Lanjut Isi Data Diri
+        </button>
+    </div>
+
+    <div id="modalData" class="modal">
+        <div class="modal-content shadow-2xl">
+            <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-address-card text-blue-600"></i> Data Pemesan
+            </h3>
+            <div class="space-y-4">
+                <input type="text" id="nama" placeholder="Nama Lengkap" class="w-full p-3 rounded-xl bg-slate-100 outline-none border-2 border-transparent focus:border-blue-500">
+                <textarea id="alamat" placeholder="Alamat Lengkap" class="w-full p-3 rounded-xl bg-slate-100 outline-none border-2 border-transparent focus:border-blue-500 h-24"></textarea>
+                <input type="tel" id="wa" placeholder="Nomor WA (Contoh: 0812...)" class="w-full p-3 rounded-xl bg-slate-100 outline-none border-2 border-transparent focus:border-blue-500">
+                
+                <div class="flex gap-2 pt-4">
+                    <button type="button" onclick="closeModal()" class="flex-1 py-3 font-bold text-slate-400">Batal</button>
+                    <button type="button" onclick="kirimKeWA()" class="flex-1 py-3 bg-green-500 text-white font-bold rounded-xl shadow-lg shadow-green-100">Kirim Ke WA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var keranjang = [];
+        var subtotal = 0;
+        var ongkir = 0;
+
+        function loadKeranjang() {
+            var rawCart = localStorage.getItem('cart');
+            if (rawCart) {
+                keranjang = JSON.parse(rawCart);
+            } else {
+                keranjang = [];
+            }
+            
+            var container = document.getElementById('displayBarang');
+            
+            if (!keranjang || keranjang.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"><i class="fa-solid fa-cart-shopping text-slate-300 text-4xl mb-2"></i><p class="text-slate-400 font-medium text-sm">Keranjang kosong.<br>Silakan pilih produk dulu!</p></div>';
+                document.getElementById('txtSubtotal').innerText = "Rp 0";
+                document.getElementById('txtTotal').innerText = "Rp 0";
+                subtotal = 0;
+                return;
+            }
+
+            subtotal = 0;
+            var html = '';
+            for (var i = 0; i < keranjang.length; i++) {
+                var item = keranjang[i];
+                var harga = parseInt(item.harga) || 0;
+                var jumlah = parseInt(item.jumlah) || 0;
+                var totalHargaItem = harga * jumlah;
+                subtotal += totalHargaItem;
+
+                html += '<div class="flex justify-between items-center bg-white p-2 border-b border-slate-50">' +
+                    '<div class="flex-1">' +
+                        '<p class="font-bold text-slate-800 text-sm">' + item.nama + '</p>' +
+                        '<p class="text-xs text-slate-500">' + jumlah + ' x Rp ' + harga.toLocaleString('id-ID') + '</p>' +
+                    '</div>' +
+                    '<div class="flex items-center gap-3">' +
+                        '<span class="font-extrabold text-blue-600 text-sm">Rp ' + totalHargaItem.toLocaleString('id-ID') + '</span>' +
+                        '<button type="button" onclick="hapusItem(' + i + ')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can text-xs"></i></button>' +
+                    '</div>' +
+                '</div>';
+            }
+            
+            container.innerHTML = html;
+            document.getElementById('txtSubtotal').innerText = "Rp " + subtotal.toLocaleString('id-ID');
+            updateOngkir();
+        }
+
+        function hapusItem(index) {
+            if (confirm("Hapus item ini?")) {
+                keranjang.splice(index, 1);
+                localStorage.setItem('cart', JSON.stringify(keranjang));
+                loadKeranjang();
+            }
+        }
+
+        function updateOngkir() {
+            var metode = document.getElementById('metode').value;
+            var wilayahBox = document.getElementById('wilayahBox');
+            var selectWilayah = document.getElementById('wilayah');
+            
+            if (metode === 'antar') {
+                wilayahBox.classList.remove('hidden');
+                var selectedOption = selectWilayah.options[selectWilayah.selectedIndex];
+                ongkir = parseInt(selectedOption.getAttribute('data-harga')) || 0;
+            } else {
+                wilayahBox.classList.add('hidden');
+                ongkir = 0;
+            }
+
+            document.getElementById('txtOngkir').innerText = "Rp " + ongkir.toLocaleString('id-ID');
+            document.getElementById('txtTotal').innerText = "Rp " + (subtotal + ongkir).toLocaleString('id-ID');
+        }
+
+        function prosesLanjut() {
+            // Re-hitung subtotal langsung dari data terbaru di memori agar nilai pasti akurat
+            var totalBelanjaSekarang = 0;
+            if (keranjang && keranjang.length > 0) {
+                for (var i = 0; i < keranjang.length; i++) {
+                    totalBelanjaSekarang += (parseInt(keranjang[i].harga) || 0) * (parseInt(keranjang[i].jumlah) || 0);
+                }
+            } else {
+                alert("Keranjang belanja Anda masih kosong. Silakan pilih produk terlebih dahulu!");
+                return;
+            }
+
+            var metode = document.getElementById('metode').value;
+
+            // Pengecekan Metode Pengantaran (Delivery)
+            if (metode === 'antar') {
+                if (totalBelanjaSekarang < 100000) {
+                    alert("maaf pesanan anda dibawah minimal order, silahkan ambil barang di toko");
+                    return; // MENGHENTIKAN PROSES! Modal/form nama TIDAK MUNCUL
+                }
+                
+                if (document.getElementById('wilayah').value === "0") {
+                    alert("Silakan pilih lokasi desa untuk tujuan pengantaran!");
+                    return;
+                }
+            }
+
+            // MUNCULKAN FORM NAMA HANYA JIKA LOLOS
+            document.getElementById('modalData').style.display = 'block';
+        }
+
+        function closeModal() { 
+            document.getElementById('modalData').style.display = 'none'; 
+        }
+
+        function kirimKeWA() {
+            var nama = document.getElementById('nama').value;
+            var alamat = document.getElementById('alamat').value;
+            var wa = document.getElementById('wa').value;
+
+            if (!nama || !alamat || !wa) {
+                alert("Isi data lengkap ya!");
+                return;
+            }
+
+            var text = "*PESANAN BARU - NADA PHOTOCOPY B2*\n\n";
+            text += "*Data Pemesan:*\n- Nama: " + nama + "\n- Alamat: " + alamat + "\n- WA: " + wa + "\n\n";
+            text += "*Daftar Barang:*\n";
+            for (var i = 0; i < keranjang.length; i++) {
+                var item = keranjang[i];
+                text += "- " + item.nama + " (" + item.jumlah + "x) : Rp " + (item.harga * item.jumlah).toLocaleString('id-ID') + "\n";
+            }
+            text += "\n*TOTAL BAYAR: Rp " + (subtotal + ongkir).toLocaleString('id-ID') + "*";
+            text += "\n*Metode:* " + document.getElementById('metode').value.toUpperCase();
+
+            var url = "https://wa.me/6285788722252?text=" + encodeURIComponent(text);
+            localStorage.removeItem('cart'); 
+            window.location.href = url;
+        }
+
+        window.onload = function() {
+            loadKeranjang();
+        };
+    </script>
+</body>
+</html>
