@@ -74,7 +74,6 @@
     </div>
 
     <script>
-        // MEMBACA FILE GAMBAR LANGSUNG TANPA NAMA FOLDER
         const dataAtk = [
             { id: 1, nama: "Kertas HVS A4 70gr", harga: 50000, img: "ini (1).ico" },
             { id: 2, nama: "Buku Sidu 38 Lembar", harga: 40000, img: "ini (2).ico" },
@@ -125,6 +124,19 @@
         ];
 
         let keranjang = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        // Menyimpan data teracak agar urutannya konsisten saat mencari/menambah ke keranjang
+        let displayProducts = shuffleArray(dataAtk);
+
+        // Fungsi untuk mengacak urutan barang (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
 
         function renderProducts(list) {
             const container = document.getElementById('katalog-container');
@@ -239,7 +251,7 @@
 
         function getCurrentFilteredList() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            return dataAtk.filter(item => item.nama.toLowerCase().includes(query));
+            return displayProducts.filter(item => item.nama.toLowerCase().includes(query));
         }
 
         function goToCheckout() {
@@ -251,7 +263,8 @@
         }
 
         updateCartBadge();
-        renderProducts(dataAtk);
+        // Menampilkan katalog teracak saat halaman dibuka
+        renderProducts(displayProducts);
     </script>
 </body>
 </html>
