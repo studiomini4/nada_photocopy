@@ -31,6 +31,7 @@
                 <label class="block text-xs font-bold text-blue-800 uppercase">Pilih Lokasi Desa</label>
                 <select id="wilayah" onchange="updateOngkir()" class="w-full p-2 rounded-lg border-none outline-none font-bold text-slate-700">
                     <option value="0" data-harga="0">-- Pilih Wilayah --</option>
+                    <option value="B2" data-harga="0">Bero Jaya Timur (B2) - Gratis Ongkir</option>
                     <option value="B1" data-harga="10000">Beji Mulyo (B1) - Rp 10.000</option>
                     <option value="Mangsang" data-harga="10000">Mangsang (Hijrah Mukti) - Rp 10.000</option>
                 </select>
@@ -151,7 +152,6 @@
         }
 
         function prosesLanjut() {
-            // Re-hitung subtotal langsung dari data terbaru di memori agar nilai pasti akurat
             var totalBelanjaSekarang = 0;
             if (keranjang && keranjang.length > 0) {
                 for (var i = 0; i < keranjang.length; i++) {
@@ -164,11 +164,10 @@
 
             var metode = document.getElementById('metode').value;
 
-            // Pengecekan Metode Pengantaran (Delivery)
             if (metode === 'antar') {
                 if (totalBelanjaSekarang < 100000) {
                     alert("maaf pesanan anda dibawah minimal order, silahkan ambil barang di toko");
-                    return; // MENGHENTIKAN PROSES! Modal/form nama TIDAK MUNCUL
+                    return;
                 }
                 
                 if (document.getElementById('wilayah').value === "0") {
@@ -177,7 +176,6 @@
                 }
             }
 
-            // MUNCULKAN FORM NAMA HANYA JIKA LOLOS
             document.getElementById('modalData').style.display = 'block';
         }
 
@@ -195,6 +193,9 @@
                 return;
             }
 
+            var selectWilayah = document.getElementById('wilayah');
+            var namaWilayah = selectWilayah.options[selectWilayah.selectedIndex].text;
+
             var text = "*PESANAN BARU - NADA PHOTOCOPY B2*\n\n";
             text += "*Data Pemesan:*\n- Nama: " + nama + "\n- Alamat: " + alamat + "\n- WA: " + wa + "\n\n";
             text += "*Daftar Barang:*\n";
@@ -204,6 +205,9 @@
             }
             text += "\n*TOTAL BAYAR: Rp " + (subtotal + ongkir).toLocaleString('id-ID') + "*";
             text += "\n*Metode:* " + document.getElementById('metode').value.toUpperCase();
+            if (document.getElementById('metode').value === 'antar') {
+                text += "\n*Wilayah:* " + namaWilayah;
+            }
 
             var url = "https://wa.me/6285788722252?text=" + encodeURIComponent(text);
             localStorage.removeItem('cart'); 
